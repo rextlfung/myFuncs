@@ -1,46 +1,43 @@
-function interactive4D(data)
-% INTERACTIVE4D Interactive 4D viewer with fullscreen gallery
-%   Images fill the window, slider + text overlay at edges
+function interactive3D(data)
+% INTERACTIVE3D Interactive viewer for 3D (x,y,time) data
+%   Scroll wheel, slider, or arrow keys to move through time
 
-    % make first dimension horizontal
-    data = permute(data, [2, 1, 3, 4]);
+    % Ensure orientation matches expectation (x horizontal)
+    data = permute(data, [2, 1, 3]);
 
     % Compute global intensity scaling
     dataMin = min(data(:));
     dataMax = max(data(:));
 
     % Create figure
-    fig = figure('Name', '4D Volume Gallery', 'NumberTitle', 'off', ...
+    fig = figure('Name', '3D Time Viewer', 'NumberTitle', 'off', ...
                  'WindowScrollWheelFcn', @scrollCallback, ...
                  'WindowKeyPressFcn', @keyPressCallback);
 
     % Create axes filling almost entire figure
     ax = axes('Parent', fig, ...
-              'Position', [0 0 1 1]); % fill window
+              'Position', [0 0.05 1 0.95]); % leave space for slider
     ax.PositionConstraint = 'innerposition';
 
-    xlabel(ax, 'x');
-    ylabel(ax, 'y');
-
-    % Create frame number text (top-center overlay)
+    % Frame number text (top-center overlay)
     frameText = uicontrol('Style', 'text', ...
                           'Parent', fig, ...
                           'Units', 'normalized', ...
-                          'Position', [0.4 0.96 0.2 0.04], ...
+                          'Position', [0.28 0.97 0.1 0.03], ...
                           'String', '', ...
                           'FontSize', 12, ...
                           'BackgroundColor', 'k', ...
                           'ForegroundColor', 'w', ...
                           'HorizontalAlignment', 'center');
 
-    % Create scrollbar (thin bar at bottom)
+    % Slider (bottom)
     scrollBar = uicontrol('Style', 'slider', ...
                           'Parent', fig, ...
                           'Units', 'normalized', ...
                           'Position', [0 0 1 0.04], ...
-                          'Min', 1, 'Max', size(data, 4), ...
+                          'Min', 1, 'Max', size(data, 3), ...
                           'Value', 1, ...
-                          'SliderStep', [1/(size(data,4)-1) , 10/(size(data,4)-1)], ...
+                          'SliderStep', [1/(size(data,3)-1) , 10/(size(data,3)-1)], ...
                           'Callback', @sliderCallback);
 
     % Store handles
@@ -48,7 +45,7 @@ function interactive4D(data)
     handles.ax = ax;
     handles.imgHandle = []; % placeholder for imagesc handle
     handles.currentTime = 1;
-    handles.maxTime = size(data, 4);
+    handles.maxTime = size(data, 3);
     handles.frameText = frameText;
     handles.scrollBar = scrollBar;
     handles.dataMin = dataMin;
@@ -56,7 +53,7 @@ function interactive4D(data)
     guidata(fig, handles);
 
     % Initial plot
-    plotGallery(fig);
+    plotFrame(fig);
 end
 
 function scrollCallback(src, event)
@@ -68,7 +65,7 @@ function scrollCallback(src, event)
     end
     set(handles.scrollBar, 'Value', handles.currentTime);
     guidata(src, handles);
-    plotGallery(src);
+    plotFrame(src);
 end
 
 function sliderCallback(src, ~)
@@ -76,7 +73,7 @@ function sliderCallback(src, ~)
     handles = guidata(fig);
     handles.currentTime = round(get(src, 'Value'));
     guidata(fig, handles);
-    plotGallery(fig);
+    plotFrame(fig);
 end
 
 function keyPressCallback(src, event)
@@ -91,48 +88,29 @@ function keyPressCallback(src, event)
     end
     set(handles.scrollBar, 'Value', handles.currentTime);
     guidata(src, handles);
-    plotGallery(src);
+    plotFrame(src);
 end
 
-function plotGallery(fig)
+function plotFrame(fig)
     handles = guidata(fig);
 
-    if ~isvalid(handles.ax)
-        return;
-    end
-
-    volumeData = handles.data(:, :, :, handles.currentTime);
-    numSlices = size(volumeData, 3);
-
-    nCols = ceil(numSlices.^0.6);
-    nRows = ceil(numSlices / nCols);
+    % Get 2D frame at current time
+    img = handles.data(:, :, handles.currentTime);
 
     % Normalize consistently across time
-    volumeData = (volumeData - handles.dataMin) / (handles.dataMax - handles.dataMin);
-
-    [sx, sy, ~] = size(volumeData);
-    canvas = ones(nRows * sx, nCols * sy);
-
-    for idx = 1:numSlices
-        row = floor((idx-1) / nCols);
-        col = mod((idx-1), nCols);
-        xIdx = (row*sx + 1):(row*sx + sx);
-        yIdx = (col*sy + 1):(col*sy + sy);
-        canvas(xIdx, yIdx) = volumeData(:, :, idx);
-    end
+    img = (img - handles.dataMin) / (handles.dataMax - handles.dataMin);
 
     if isempty(handles.imgHandle) || ~isvalid(handles.imgHandle)
-        handles.imgHandle = imagesc(handles.ax, canvas);
+        handles.imgHandle = imagesc(handles.ax, img);
         axis(handles.ax, 'image', 'off');
         colormap(handles.ax, gray);
     else
-        set(handles.imgHandle, 'CData', canvas);
+        set(handles.imgHandle, 'CData', img);
     end
 
-    % Update frame number text
-    if isfield(handles, 'frameText') && isvalid(handles.frameText)
-        set(handles.frameText, 'String', sprintf('Frame %d / %d', handles.currentTime, handles.maxTime));
-    end
+    % Update frame text
+    set(handles.frameText, 'String', ...
+        sprintf('Frame %d / %d', handles.currentTime, handles.maxTime));
 
     guidata(fig, handles);
     drawnow;
