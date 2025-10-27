@@ -37,79 +37,66 @@ function [smaps, emaps] = makeSmaps(ksp, method)
         
         %% Nullspace-based algorithm parameters
         
-        dim_sens = [Nx, Ny, Nz];               % Desired dimensions for the estimated sensitivity maps
+        dim_sens = [Nx,Ny,Nz];                  % Desired dimensions for the estimated sensitivity maps.
         
-        tau = 3;                               % Kernel radius. Default: 3
+        tau      = 3;                         % Kernel radius. Default: 3
         
-        threshold = 0.08;                      % Threshold for C-matrix singular values. Default: 0.05
-                                               % Note: In this example we don't use the default value.
+        threshold = 0.08;                     % Threshold for C-matrix singular values. Default: 0.05
+                                              % Note: In this example we don't use the default value.
         
-        M = 30;                                % Number of iterations for Power Iteration. Default: 30
-        
-        PowerIteration_flag_convergence = 1;   % Binary variable. 1 = convergence error is displayed 
-                                               % for Power Iteration if the method has not converged 
-                                               % for some voxels after the iterations indicated by 
-                                               % the user. In this example it corresponds to an empty 
-                                               % array which indicates that the default value is 
-                                               % being used. Default: 1
+        M = 20;                               % Number of iterations for Power Iteration. Default: 30
+                                              % Note: In this example we use a smaller value
+                                              % to speed up the calculations.
         
         PowerIteration_flag_auto = 1;         % Binary variable. 1 = Power Iteration is run until
-                                               % convergence in case the number of iterations
-                                               % indicated by the user is too small. In this example
-                                               % this variable corresponds to an empty array which
-                                               % indicates that the default value is being used.
-                                               % Default: 0
+                                              % convergence in case the number of iterations
+                                              % indicated by the user is too small. Default: 0
         
-        interp_zp = 24;                        % Amount of zero-padding to create the low-resolution grid 
-                                               % if FFT-interpolation is used. In this example it
-                                               % corresponds to an empty array which indicates that the
-                                               % default value is being used. Default: 24
+        interp_zp = 24;                       % Amount of zero-padding to create the low-resolution grid 
+                                              % if FFT-interpolation is used. Default: 24
         
-        gauss_win_param = 100;                  % Parameter for the Gaussian apodizing window used to 
-                                               % generate the low-resolution image in the FFT-based 
-                                               % interpolation approach. This is the reciprocal of the 
-                                               % standard deviation of the Gaussian window. In this 
-                                               % example it corresponds to an empty array which indicates 
-                                               % that the default value is being used. Default: 100
+        gauss_win_param = 100;                % Parameter for the Gaussian apodizing window used to 
+                                              % generate the low-resolution image in the FFT-based 
+                                              % interpolation approach. This is the reciprocal of the 
+                                              % standard deviation of the Gaussian window. Default: 100
         
-        sketch_dim = 500;                       % Dimension of the sketch matrix used to calculate a
-                                               % basis for the nullspace of the C matrix using a sketched SVD. 
-                                               % In this example it corresponds to an empty array which indicates
-                                               % that the default value is being used. Default: 500
+        sketch_dim = 300;                     % Dimension of the sketch matrix used to calculate a
+                                              % basis for the nullspace of the C matrix using a sketched SVD. 
+                                              % Default: 500. Note: In this example we use a smaller value
         
-        visualize_C_matrix_sv = 1;             % Binary variable. 1 = Singular values of the C matrix are displayed.
-                                               % Default: 0. 
-                                               % Note: In this example we set it to 1 to visualize the singular values
-                                               % of the C matrix. If sketched_SVD = 1 and if the curve of the singular values flattens out,
-                                               % it suggests that the sketch dimension is appropriate for the data.
-        
+        visualize_C_matrix_sv = 1;            % Binary variable. 1 = Singular values of the C matrix are displayed.
+                                              % Default: 0. 
+                                              % Note: In this example we set it to 1 to visualize the singular values
+                                              % of the C matrix. If sketched_SVD = 1 and if the curve of the singular values flattens out,
+                                              % it suggests that the sketch dimension is appropriate for the data.
+                                              
         %% PISCO techniques
         
         % The following techniques are used if the corresponding binary variable is equal to 1
         
-        kernel_shape = 1;                      % Binary variable. 1 = ellipsoidal shape is adopted for 
-                                               % the calculation of kernels (instead of rectangular shape).
-                                               % Default: 1
+        kernel_shape = 1;                     % Binary variable. 1 = ellipsoidal shape is adopted for 
+                                              % the calculation of kernels (instead of rectangular shape).
+                                              % Default: 1
         
-        FFT_nullspace_C_calculation = 1;       % Binary variable. 1 = FFT-based calculation of nullspace 
-                                               % vectors of C by calculating C'*C directly (instead of 
-                                               % calculating C first). Default: 1
+        FFT_nullspace_C_calculation = 1;      % Binary variable. 1 = FFT-based calculation of nullspace 
+                                              % vectors of C by calculating C'*C directly (instead of 
+                                              % calculating C first). Default: 1
         
-        sketched_SVD = 1;                      % Binary variable. 1 = sketched SVD is used to calculate 
-                                               % a basis for the nullspace of the C matrix (instead of 
-                                               % calculating the nullspace vectors directly and then the 
-                                               % basis). Default: 1
+        sketched_SVD = 1;                     % Binary variable. 1 = sketched SVD is used to calculate 
+                                              % a basis for the nullspace of the C matrix (instead of 
+                                              % calculating the nullspace vectors directly and then the 
+                                              % basis). Default: 1
         
         PowerIteration_G_nullspace_vectors = 1; % Binary variable. 1 = Power Iteration approach is 
                                                 % used to find nullspace vectors of the G matrices 
                                                 % (instead of using SVD). Default: 1
         
-        FFT_interpolation = 1;                 % Binary variable. 1 = sensitivity maps are calculated on 
-                                               % a small spatial grid and then interpolated to a grid with 
-                                               % nominal dimensions using an FFT-approach. Default: 1
+        FFT_interpolation = 1;                % Binary variable. 1 = sensitivity maps are calculated on 
+                                              % a small spatial grid and then interpolated to a grid with 
+                                              % nominal dimensions using an FFT-approach. Default: 1
         
-        verbose = 1;                           % Binary variable. 1 = PISCO information is displayed. 
-                                               % Default: 1
+        verbose = 1;                          % Binary variable. 1 = PISCO information is displayed. 
+                                              % Default: 1
 
         if isempty(which('PISCO_sensitivity_map_estimation'))
             error(['The function PISCO_senseMaps_estimation.m is not found in your MATLAB path. ' ...
