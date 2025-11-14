@@ -41,12 +41,17 @@ function [smaps, emaps] = makeSmaps(ksp, method)
         
         tau      = 3;                         % Kernel radius. Default: 3
         
-        threshold = 0.08;                     % Threshold for C-matrix singular values. Default: 0.05
+        threshold = 0.05;                     % Threshold for C-matrix singular values. Default: 0.05
                                               % Note: In this example we don't use the default value.
         
-        M = 20;                               % Number of iterations for Power Iteration. Default: 30
+        M = 30;                               % Number of iterations for Power Iteration. Default: 30
                                               % Note: In this example we use a smaller value
                                               % to speed up the calculations.
+
+        PowerIteration_flag_convergence = 1;  % Binary variable. 1 = convergence erro>
+                                              % for Power Iteration if the method has>
+                                              % for some voxels after the iterations >
+                                              % the user. Default: 1
         
         PowerIteration_flag_auto = 1;         % Binary variable. 1 = Power Iteration is run until
                                               % convergence in case the number of iterations
@@ -60,7 +65,7 @@ function [smaps, emaps] = makeSmaps(ksp, method)
                                               % interpolation approach. This is the reciprocal of the 
                                               % standard deviation of the Gaussian window. Default: 100
         
-        sketch_dim = 300;                     % Dimension of the sketch matrix used to calculate a
+        sketch_dim = 500;                     % Dimension of the sketch matrix used to calculate a
                                               % basis for the nullspace of the C matrix using a sketched SVD. 
                                               % Default: 500. Note: In this example we use a smaller value
         
