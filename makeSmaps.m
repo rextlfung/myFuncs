@@ -48,11 +48,6 @@ function [smaps, emaps] = makeSmaps(ksp, method)
                                               % Note: In this example we use a smaller value
                                               % to speed up the calculations.
         
-        PowerIteration_flag_convergence = 1;  % Binary variable. 1 = convergence error is displayed 
-                                              % for Power Iteration if the method has not converged 
-                                              % for some voxels after the iterations indicated by 
-                                              % the user. Default: 1
-        
         PowerIteration_flag_auto = 1;         % Binary variable. 1 = Power Iteration is run until
                                               % convergence in case the number of iterations
                                               % indicated by the user is too small. Default: 0
@@ -68,7 +63,6 @@ function [smaps, emaps] = makeSmaps(ksp, method)
         sketch_dim = 300;                     % Dimension of the sketch matrix used to calculate a
                                               % basis for the nullspace of the C matrix using a sketched SVD. 
                                               % Default: 500. Note: In this example we use a smaller value
-                                              % to speed up the calculations.
         
         visualize_C_matrix_sv = 1;            % Binary variable. 1 = Singular values of the C matrix are displayed.
                                               % Default: 0. 
