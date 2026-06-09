@@ -5,6 +5,9 @@ function interactive4D(data)
     % make first dimension horizontal
     data = permute(data, [2, 1, 3, 4]);
 
+    % flip vertically
+    data = flip(data,1);
+
     % Compute global intensity scaling
     dataMin = min(data(:));
     dataMax = max(data(:));
